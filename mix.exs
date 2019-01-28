@@ -21,7 +21,8 @@ defmodule Tomloc.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:toml, "~> 0.5.2"}
+      {:toml, "~> 0.5.2"},
+      {:credo, "~> 1.0.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
