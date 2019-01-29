@@ -1,6 +1,8 @@
 defmodule Tomloc do
   use GenServer
 
+  alias Tomloc.StringParser
+
   # Server (callbacks)
   @impl true
   def init(params) do
@@ -41,11 +43,25 @@ defmodule Tomloc do
     GenServer.start_link(__MODULE__, params)
   end
 
-  def get(loc_id, lang) when is_atom(loc_id) and is_atom(lang) do
+  def get(loc_id, lang) when (is_binary(loc_id) or is_atom(loc_id)) and is_atom(lang) do
     table = GenServer.call(__MODULE__, :get_table)
 
-    ets_id = :"#{loc_id}_#{lang}"
-    :ets.lookup_element(table, ets_id, 2)
+    ets_id = "#{loc_id}_#{lang}"
+    {:str, str} = :ets.lookup_element(table, ets_id, 2)
+    str
+  end
+
+  def get(loc_id, lang, params) when (is_binary(loc_id) or is_atom(loc_id)) and is_atom(lang) do
+    unless Keyword.keyword?(params) do
+      raise ArgumentError
+    end
+
+    table = GenServer.call(__MODULE__, :get_table)
+
+    ets_id = "#{loc_id}_#{lang}"
+    {:fun, fun} = :ets.lookup_element(table, ets_id, 2)
+    {:ok, str} = fun.(params)
+    str
   end
 
   defp process_tomloc(_table, _basename, []), do: :noop
@@ -53,9 +69,12 @@ defmodule Tomloc do
   defp process_tomloc(table, basename, [{loc_id, langs} | tail])
        when is_binary(loc_id) and is_map(langs) do
     Enum.each(langs, fn {lang, transl} ->
-      ets_id = :"#{basename}_#{loc_id}_#{lang}"
+      ets_id = "#{basename}_#{loc_id}_#{lang}"
 
-      true = :ets.insert_new(table, {ets_id, transl})
+      case StringParser.parse(transl) do
+        {:str, str} -> true = :ets.insert_new(table, {ets_id, {:str, str}})
+        {:fun, fun} -> true = :ets.insert_new(table, {ets_id, {:fun, fun}})
+      end
     end)
 
     process_tomloc(table, basename, tail)

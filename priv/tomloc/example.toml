@@ -7,3 +7,7 @@ uk = "Привіт світ"
 [bye_bye]
 en = "Bye Bye"
 uk = "Бувай"
+
+[param]
+en = "Hello, %{name}!"
+uk = "Привіт, %{name}!"

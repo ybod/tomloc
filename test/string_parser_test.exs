@@ -1,4 +1,6 @@
 defmodule Tomloc.StringParserTest do
+  @moduledoc false
+
   use ExUnit.Case, async: true
   doctest Tomloc.StringParser
 
