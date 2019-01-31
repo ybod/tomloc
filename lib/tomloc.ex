@@ -44,23 +44,21 @@ defmodule Tomloc do
     GenServer.start_link(__MODULE__, params)
   end
 
-  def get(loc_id, lang) when (is_binary(loc_id) or is_atom(loc_id)) and is_atom(lang) do
+  def get(loc_id, lang, params \\ []) when (is_binary(loc_id) or is_atom(loc_id)) and is_atom(lang) do
     table = GenServer.call(__MODULE__, :get_table)
 
     ets_id = "#{loc_id}_#{lang}"
-    {:plain, str} = :ets.lookup_element(table, ets_id, 2)
-    str
+
+    case :ets.lookup_element(table, ets_id, 2) do
+      {:plain, str} -> {:ok, str}
+      {:interpolated, interpolated_str} -> Core.format_interpolated_str(interpolated_str, params)
+      {:list, list} -> {:ok, Enum.map(list, &process_list_el(&1, params))}
+    end
   end
 
-  def get(loc_id, lang, params) when (is_binary(loc_id) or is_atom(loc_id)) and is_atom(lang) do
-    unless Keyword.keyword?(params) do
-      raise ArgumentError
-    end
+  defp process_list_el({:plain, str}, _), do: str
 
-    table = GenServer.call(__MODULE__, :get_table)
-
-    ets_id = "#{loc_id}_#{lang}"
-    {:interpolated, interpolated_str} = :ets.lookup_element(table, ets_id, 2)
+  defp process_list_el({:interpolated, interpolated_str}, params) do
     {:ok, str} = Core.format_interpolated_str(interpolated_str, params)
     str
   end
@@ -72,14 +70,22 @@ defmodule Tomloc do
     Enum.each(langs, fn {lang, transl} ->
       ets_id = "#{basename}_#{loc_id}_#{lang}"
 
-      case StringParser.parse(transl) do
-        {:plain, str} -> true = :ets.insert_new(table, {ets_id, {:plain, str}})
-        {:interpolated, interpolated_str} -> true = :ets.insert_new(table, {ets_id, {:interpolated, interpolated_str}})
-      end
+      ets_record =
+        if is_list(transl) do
+          {:list, Enum.map(transl, &StringParser.parse(&1))}
+        else
+          StringParser.parse(transl)
+        end
+
+      insert(ets_id, ets_record, table)
     end)
 
     process_tomloc(table, basename, tail)
   end
 
   defp process_tomloc(table, basename, [_head | tail]), do: process_tomloc(table, basename, tail)
+
+  defp insert(ets_id, ets_record, ets_table) when is_tuple(ets_record) do
+    true = :ets.insert_new(ets_table, {ets_id, ets_record})
+  end
 end

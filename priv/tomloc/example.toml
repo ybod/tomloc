@@ -11,3 +11,8 @@ uk = "Бувай"
 [param]
 en = "Hello, %{name}!"
 uk = "Привіт, %{name}!"
+
+[list]
+en = ["one", "%{two}", "three"]
+uk = ["один", "%{two}", "три"]
+

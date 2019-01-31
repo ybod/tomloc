@@ -8,14 +8,18 @@ defmodule TomlocTest do
   end
 
   test "can return string with string key" do
-    assert "Привіт світ" == Tomloc.get("example_hello", :uk)
+    assert {:ok, "Привіт світ"} == Tomloc.get("example_hello", :uk)
   end
 
   test "can return string with atom key" do
-    assert "Bye Bye" == Tomloc.get(:example_bye_bye, :en)
+    assert {:ok, "Bye Bye"} == Tomloc.get(:example_bye_bye, :en)
   end
 
   test "can return parameterized string" do
-    assert "Привіт, незнайомцю!" == Tomloc.get(:example_param, :uk, name: "незнайомцю")
+    assert {:ok, "Привіт, незнайомцю!"} == Tomloc.get(:example_param, :uk, name: "незнайомцю")
+  end
+
+  test "can return string lists" do
+    assert {:ok, ["one", "2", "three"]} = Tomloc.get(:example_list, :en, two: 2)
   end
 end
