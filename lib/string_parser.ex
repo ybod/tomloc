@@ -7,25 +7,27 @@ defmodule Tomloc.StringParser do
   ## Examples
 
   iex> Tomloc.StringParser.parse("Welcome to Tomloc!")
-  {:str, "Welcome to Tomloc!"}
+  {:plain, "Welcome to Tomloc!"}
 
-  iex> {:fun, fun} = Tomloc.StringParser.parse("Welcome to %{name}!!!")
-  iex> fun.(name: "Tomloc")
-  {:ok, "Welcome to Tomloc!!!"}
+  iex> Tomloc.StringParser.parse("Welcome to %{name}!!!")
+  {:interpolated, ["!!!", :name, "Welcome to "]}
 
   iex> Tomloc.StringParser.parse("Welcome to %%{no_name}!!!")
-  {:str, "Welcome to %{no_name}!!!"}
+  {:plain, "Welcome to %{no_name}!!!"}
 
   iex> Tomloc.StringParser.parse("Welcome to %{name%{")
   {:error, {:invalid_param, "starts at pos.11", "symbol '%' found inside parameter name at pos.17"}}
   """
   def parse(str) do
-    case do_parse(str, {0, <<>>}, {:str, []}) do
-      {:str, [res]} -> {:str, res}
-      {:fun, res} -> {:fun, fn params -> create_str(res, params, []) end}
+    case do_parse(str, {0, <<>>}, {:plain, []}) do
+      {:plain, [res]} -> {:plain, res}
+      {:interpolated, res} -> {:interpolated, res}
       {:error, reason} -> {:error, reason}
     end
   end
+
+  defp do_parse(<<>>, {_, ""}, {res_type, res}),
+    do: {res_type, res}
 
   defp do_parse(<<>>, {_, parsed}, {res_type, res}),
     do: {res_type, [parsed | res]}
@@ -40,8 +42,8 @@ defmodule Tomloc.StringParser do
         {:error, {:invalid_param, "starts at pos.#{i}", where}}
 
       {param_length, param, rest} ->
-        new_res = [String.to_atom(param) | [parsed | res]]
-        do_parse(rest, {i + param_length, <<>>}, {:fun, new_res})
+        new_res = if parsed != "", do: [String.to_atom(param) | [parsed | res]], else: [String.to_atom(param) | res]
+        do_parse(rest, {i + param_length, <<>>}, {:interpolated, new_res})
     end
   end
 
@@ -63,17 +65,5 @@ defmodule Tomloc.StringParser do
 
   defp do_parse_param(<<byte, rest::binary>>, j, param) do
     do_parse_param(rest, j + 1, param <> <<byte>>)
-  end
-
-  # Create string substituting params
-  defp create_str([], _, res), do: {:ok, :erlang.list_to_binary(res)}
-
-  defp create_str([h | t], params, res) when is_binary(h), do: create_str(t, params, [h | res])
-
-  defp create_str([h | t], params, res) when is_atom(h) do
-    case Keyword.fetch(params, h) do
-      {:ok, param} -> create_str(t, params, [to_string(param) | res])
-      :error -> {:error, {:invalid_param, "required parameter '#{h}' not found"}}
-    end
   end
 end

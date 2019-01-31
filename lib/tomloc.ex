@@ -2,6 +2,7 @@ defmodule Tomloc do
   use GenServer
 
   alias Tomloc.StringParser
+  alias Tomloc.Core
 
   # Server (callbacks)
   @impl true
@@ -47,7 +48,7 @@ defmodule Tomloc do
     table = GenServer.call(__MODULE__, :get_table)
 
     ets_id = "#{loc_id}_#{lang}"
-    {:str, str} = :ets.lookup_element(table, ets_id, 2)
+    {:plain, str} = :ets.lookup_element(table, ets_id, 2)
     str
   end
 
@@ -59,8 +60,8 @@ defmodule Tomloc do
     table = GenServer.call(__MODULE__, :get_table)
 
     ets_id = "#{loc_id}_#{lang}"
-    {:fun, fun} = :ets.lookup_element(table, ets_id, 2)
-    {:ok, str} = fun.(params)
+    {:interpolated, interpolated_str} = :ets.lookup_element(table, ets_id, 2)
+    {:ok, str} = Core.format_interpolated_str(interpolated_str, params)
     str
   end
 
@@ -72,8 +73,8 @@ defmodule Tomloc do
       ets_id = "#{basename}_#{loc_id}_#{lang}"
 
       case StringParser.parse(transl) do
-        {:str, str} -> true = :ets.insert_new(table, {ets_id, {:str, str}})
-        {:fun, fun} -> true = :ets.insert_new(table, {ets_id, {:fun, fun}})
+        {:plain, str} -> true = :ets.insert_new(table, {ets_id, {:plain, str}})
+        {:interpolated, interpolated_str} -> true = :ets.insert_new(table, {ets_id, {:interpolated, interpolated_str}})
       end
     end)
 
