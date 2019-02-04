@@ -44,7 +44,8 @@ defmodule Tomloc do
     GenServer.start_link(__MODULE__, params)
   end
 
-  def get(loc_id, lang, params \\ []) when (is_binary(loc_id) or is_atom(loc_id)) and is_atom(lang) do
+  def get(loc_id, lang, params \\ [])
+      when (is_binary(loc_id) or is_atom(loc_id)) and (is_binary(lang) or is_atom(lang)) do
     table = GenServer.call(__MODULE__, :get_table)
 
     ets_id = "#{loc_id}_#{lang}"
