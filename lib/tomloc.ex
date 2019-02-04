@@ -66,6 +66,12 @@ defmodule Tomloc do
         end
       end
 
+      def get!(loc_id, lang, params \\ [])
+          when (is_binary(loc_id) or is_atom(loc_id)) and (is_binary(lang) or is_atom(lang)) do
+        {:ok, str} = get(loc_id, lang, params)
+        str
+      end
+
       defp process_list_el({:plain, str}, _), do: str
 
       defp process_list_el({:interpolated, interpolated_str}, params) do
