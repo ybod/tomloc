@@ -20,4 +20,10 @@ uk = ["один", "%{two}", "три"]
 en = ["", "two", " ", "%{empty}"]
 uk = ["", "два", " ", "%{empty}"]
 
+[multiline]
+en =  """
+One:
+  - two
+  - %{three}"""
+
 

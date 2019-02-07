@@ -33,4 +33,9 @@ defmodule TomlocTest do
   test "can return string list from array that contains empty strings" do
     assert {:ok, ["", "два", " ", ""]} == TomlocTester.get(:example_array, :uk, empty: "")
   end
+
+  test "can return multiline string correctly" do
+    {:ok, str} = TomlocTester.get(:example_multiline, :en, three: 3.0)
+    assert str == "One:\n  - two\n  - 3.0"
+  end
 end
