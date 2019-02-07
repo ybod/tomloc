@@ -4,14 +4,15 @@ defmodule Tomloc do
   """
 
   @doc false
-  defmacro __using__(otp_app: otp_app) do
-    quote bind_quoted: [otp_app: otp_app] do
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
       use GenServer
 
       alias Tomloc.StringParser
       alias Tomloc.Core
 
-      @otp_app otp_app
+      @otp_app Keyword.fetch!(opts, :otp_app)
+      @fallback_lang Keyword.get(opts, :fallback_lang, :no_fallback)
 
       # Server (callbacks)
       @impl true
@@ -58,7 +59,16 @@ defmodule Tomloc do
         table = GenServer.call(__MODULE__, :get_table)
 
         ets_id = "#{loc_id}_#{lang}"
+        fallback_id = "#{loc_id}_#{@fallback_lang}"
 
+        cond do
+          :ets.member(table, ets_id) -> get_translaction(table, ets_id, params)
+          :ets.member(table, fallback_id) -> get_translaction(table, fallback_id, params)
+          true -> {:error, {:translation, "not found: id #{loc_id}, lang #{lang}, fallback lang #{@fallback_lang}"}}
+        end
+      end
+
+      defp get_translaction(table, ets_id, params) do
         case :ets.lookup_element(table, ets_id, 2) do
           {:plain, str} -> {:ok, str}
           {:interpolated, interpolated_str} -> Core.format_interpolated_str(interpolated_str, params)

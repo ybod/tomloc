@@ -21,9 +21,16 @@ en = ["", "two", " ", "%{empty}"]
 uk = ["", "два", " ", "%{empty}"]
 
 [multiline]
-en =  """
-One:
-  - two
+en =  """One:
+  - \"two\"
   - %{three}"""
+
+uk =  """Один:
+  - \"два\"
+  - %{three}"""
+
+[fallback]
+en = "fallback"
+
 
 
