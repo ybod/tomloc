@@ -18,6 +18,8 @@ defmodule Tomloc.StringParser do
   iex> Tomloc.StringParser.parse("Welcome to %{name%{")
   {:error, {:invalid_param, "starts at pos.11", "symbol '%' found inside parameter name at pos.17"}}
   """
+  def parse(""), do: {:plain, ""}
+
   def parse(str) do
     case do_parse(str, {0, <<>>}, {:plain, []}) do
       {:plain, [res]} -> {:plain, res}

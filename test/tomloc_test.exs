@@ -27,6 +27,10 @@ defmodule TomlocTest do
   end
 
   test "can return string lists" do
-    assert {:ok, ["one", "2", "three"]} = TomlocTester.get(:example_list, :en, two: 2)
+    assert {:ok, ["one", "2", "three"]} == TomlocTester.get(:example_list, :en, two: 2)
+  end
+
+  test "can return string list from array that contains empty strings" do
+    assert {:ok, ["", "два", " ", ""]} == TomlocTester.get(:example_array, :uk, empty: "")
   end
 end

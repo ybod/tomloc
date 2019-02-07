@@ -1,4 +1,4 @@
-title = "Tomloc Localizations Example"
+# title = "Tomloc Localizations Example"
 
 [hello]
 en = "Hello World"
@@ -15,4 +15,9 @@ uk = "Привіт, %{name}!"
 [list]
 en = ["one", "%{two}", "three"]
 uk = ["один", "%{two}", "три"]
+
+[array]
+en = ["", "two", " ", "%{empty}"]
+uk = ["", "два", " ", "%{empty}"]
+
 
