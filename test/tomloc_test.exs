@@ -49,6 +49,25 @@ defmodule TomlocTest do
       {:error, {:translation, msg}} = TomlocTester.get("example_hello", :wrong_lang)
       assert msg == "not found: id example_hello, lang wrong_lang, fallback lang no_fallback"
     end
+
+    test "can reload translations" do
+      new_translation = """
+      [brave_new_world]
+      en = "Brave New World"
+      uk = "Чудовий новий світ"
+      """
+
+      new_translation_path = Path.join([__DIR__, "/../priv/tomloc/", "reload.toml"])
+
+      File.write!(new_translation_path, new_translation)
+
+      :ok = TomlocTester.reload_translations()
+
+      assert {:ok, "Brave New World"} == TomlocTester.get(:reload_brave_new_world, :en)
+      assert {:ok, "Чудовий новий світ"} == TomlocTester.get(:reload_brave_new_world, :uk)
+
+      File.rm!(new_translation_path)
+    end
   end
 
   defmodule TomlocTesterFallback do

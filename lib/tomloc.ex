@@ -38,12 +38,31 @@ defmodule Tomloc do
           process_tomloc(ets_table, basename, Map.to_list(tomloc))
         end)
 
-        {:noreply, ets_table, :hibernate}
+        {:noreply, {tomloc_dir, ets_table}, :hibernate}
       end
 
       @impl true
-      def handle_call(:get_table, _from, ets_table) do
-        {:reply, ets_table, ets_table}
+      def handle_call(:get_table, _from, {tomloc_dir, ets_table}) do
+        {:reply, ets_table, {tomloc_dir, ets_table}}
+      end
+
+      @impl true
+      def handle_cast(:reload_table, {tomloc_dir, ets_table}) do
+        true = :ets.delete_all_objects(ets_table)
+
+        tomlock_files =
+          [Application.app_dir(@otp_app, "priv"), tomloc_dir, "*.toml"]
+          |> Path.join()
+          |> Path.wildcard()
+
+        Enum.each(tomlock_files, fn tomloc_file ->
+          basename = Path.basename(tomloc_file, ".toml")
+          {:ok, tomloc} = Toml.decode_file(tomloc_file)
+
+          process_tomloc(ets_table, basename, Map.to_list(tomloc))
+        end)
+
+        {:noreply, {tomloc_dir, ets_table}, :hibernate}
       end
 
       # Client
@@ -65,6 +84,11 @@ defmodule Tomloc do
         end
       end
 
+      def reload_translations() do
+        GenServer.cast(__MODULE__, :reload_table)
+      end
+
+      # Helpers
       defp get_translaction(ets_table, ets_id, params) do
         case :ets.lookup_element(ets_table, ets_id, 2) do
           {:plain, str} -> {:ok, str}
