@@ -8,8 +8,8 @@ defmodule Tomloc do
     quote bind_quoted: [opts: opts] do
       use GenServer
 
-      alias Tomloc.StringParser
       alias Tomloc.Core
+      alias Tomloc.StringParser
 
       @otp_app Keyword.fetch!(opts, :otp_app)
       @fallback_lang Keyword.get(opts, :fallback_lang, :no_fallback)
